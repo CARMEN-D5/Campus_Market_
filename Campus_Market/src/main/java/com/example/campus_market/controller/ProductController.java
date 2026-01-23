@@ -38,7 +38,7 @@ public class ProductController {
             @RequestParam("userId") Long userId) throws IOException {
 
         // 1. Define storage path
-        String uploadDir = "D:/Project/Campus_Market/uploads/";
+        String uploadDir = "D:/Project/Campus_Market_/Campus_Market/uploads/";
         File dir = new File(uploadDir);
         if(!dir.exists()) dir.mkdirs();
 
