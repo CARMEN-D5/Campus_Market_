@@ -1,0 +1,22 @@
+### Test 1: Create a new product (POST request)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "title": "Second-hand Calculus Textbook",
+  "price": 45.0,
+  "description": "Very good condition, helpful for MATH1001."
+}
+
+### Test 2: Get all products (GET request)
+GET http://localhost:8080/api/products
+
+### Test 3: Register a user (POST request)
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "userName": "Carmen",
+  "password": "pw1234"
+}
+

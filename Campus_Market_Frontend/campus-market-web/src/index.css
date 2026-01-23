@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@layer components {
+    .modal-overlay {
+        @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm;
+    }
+
+    .modal-container {
+        @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8;
+        animation: modal-appear 0.3s ease-out;
+    }
+
+    .input-field {
+        @apply w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all;
+    }
+
+    .btn-primary {
+        @apply w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95;
+    }
+}
+
+@keyframes modal-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0) ;
+    }
+}
