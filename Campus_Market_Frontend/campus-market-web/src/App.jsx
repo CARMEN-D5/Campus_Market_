@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const CATEGORIES = [
+    {label: "All", value: "ALL"},
+    {label: "Electronics", value: "ELECTRONICS"},
+    {label: "Books", value: "BOOKS"},
+    {label: "Appliances", value: "APPLIANCES"},
+    {label: "Stationery", value: "STATIONERY"},
+    {label: "Clothing", value: "CLOTHING"},
+    {label: "Foods", value: "FOODS"},
+    {label: "Accessories", value: "ACCESSORIES"},
+    {label: "Household", value: "HOUSEHOLD"},
+    {label: "Sports", value: "SPORTS"},
+    {label: "Others", value: "OTHERS"}
+];
 
 function App() {
     const [products, setProducts] = useState([]);
     const [showForm, setShowForm] = useState(false);
-    const [newProduct, setNewProduct] = useState({title: '', price: '', description: ''});
+    const [newProduct, setNewProduct] = useState({title: '', price: '', description: '', category: ''});
     const [imageFile, setImageFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
@@ -13,6 +26,10 @@ function App() {
     const [isLoginView, setIsLoginView] = useState(true);
     const [authData, setAuthData] = useState({username:'', password:''});
     const [imageError, setImageError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortType, setSortType] = useState("latest")
+    const [selectedCategories, setSelectedCategories] = useState([]);
+
     // Fetch product list
     const fetchProducts = () => {
         fetch('http://localhost:8080/api/products')
@@ -60,17 +77,21 @@ function App() {
         formData.append('title', newProduct.title);
         formData.append("price", newProduct.price);
         formData.append("description", newProduct.description);
-        if(imageFile){
-            formData.append("image", imageFile);
-        }
         if(currentUser){
             formData.append("userId", currentUser.id)
         }
         if(!imageFile || imageError){
-            alert("Please correct the errors before submitting.");
+            alert("Please select a valid image.");
             return;
         }
-
+        if(imageFile){
+            formData.append("image", imageFile);
+        }
+        if(!newProduct.category){
+            alert("Please select a category for your item.");
+            return;
+        }
+        formData.append("category", newProduct.category);
         fetch('http://localhost:8080/api/products/with-image',{
             method: 'POST',
             body: formData,
@@ -81,7 +102,7 @@ function App() {
             setShowForm(false);
             setImageFile(null);
             setPreviewUrl(null);
-            setNewProduct({title: '', price: '', description: ''});
+            setNewProduct({title: '', price: '', description: '', category: ''});
         })
     };
 
@@ -212,6 +233,7 @@ function App() {
                                             onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
                                         />
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-meduim text-gray-700 mb-1">
                                             Image
@@ -228,6 +250,33 @@ function App() {
                                         )}
                                     </div>
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-meduim text-gray-700 mb-2">
+                                        Select Category <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {CATEGORIES.filter(c => c.value !== "ALL").map(cat =>(
+                                        <button
+                                            key={cat.value}
+                                            type="button"
+                                            onClick={() => setNewProduct({...newProduct, category: cat.value})}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                                                newProduct.category === cat.value 
+                                                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"
+                                            }`}
+                                        >
+                                            {cat.label}
+                                            {newProduct.category === cat.value && <span className="ml-1">✓</span> }
+                                        </button>
+                                        ))}
+                                    </div>
+                                    {!newProduct.category && (
+                                        <p className="text-gray-400 text-xs mt-2">Please select one category for your item.</p>
+                                    )}
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-meduim text-gray-700 mb-1">
                                         Description
@@ -271,52 +320,138 @@ function App() {
                     </div>
                 )}
 
+                {/* Filter Bar*/ }
+                <div className="flex flex-wrap gap-2 mb-6">
+                    <button
+                        onClick={() => setSelectedCategories([])}
+                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                        selectedCategories.length === 0 
+                            ? "bg-blue-600 text-white shadow-md"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                        }`}
+                    >
+                        ALL Items
+                    </button>
+
+                    {CATEGORIES.filter(cat => cat.value !== "ALL")
+                        .map(cat => {
+                            const isSelected = selectedCategories.includes(cat.value);
+                            return (
+                                <button
+                                    key={cat.value}
+                                    onClick={() => {
+                                        if (isSelected) {
+                                            setSelectedCategories(selectedCategories.filter(c => c !== cat.value));
+                                        } else {
+                                            setSelectedCategories([...selectedCategories, cat.value]);
+                                        }
+                                    }}
+                                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1
+                                        ${isSelected ? "bg-blue-100 text-blue-700 border-blue-500 shadow-sm"
+                                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                                    }`}
+                                >
+                                    {cat.label}
+                                    {isSelected && <span> ✕</span>}
+                                </button>
+                            );
+                        })
+                    }
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    {/* Search Bar */}
+                    <div className="flex-1">
+                         <input
+                            type="text"
+                            placeholder="Search for items (e.g. bike, textbook...)"
+                            className="w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                         />
+                    </div>
+
+                    {/* Sorted Type */}
+                    <div className="w-full md:w-48">
+                        <select
+                            className="w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 outline-none bg-white cursor-pointer"
+                            value={sortType}
+                            onChange={(e) => setSortType(e.target.value)}
+                        >
+                            <option value="latest">Latest First</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+
                 <h2 className="text-xl font-semibold text-gray-700 mb-6">Latest Listings</h2>
+
                 {/* Product Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map(product => (
-                        <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-                            <div className="h-48 w-full bg-gray-200">
-                                {product.imageUrl ? (
-                                    <img
-                                        src={`http://localhost:8080${product.imageUrl}`}
-                                        alt={product.title}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
-                                )}
-                            </div>
+                    {[...products]
+                        // filter selected categories
+                        .filter(product =>{
+                            if(selectedCategories.length === 0) return true;
+                            return selectedCategories.includes(product.category);})
+                        // filter searched terms
+                        .filter(product =>(
+                            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            product.description.toLowerCase().includes(searchTerm.toLowerCase())
+                        ))
+                        .sort((a,b) => {
+                            if(sortType === "price-low"){
+                                return a.price - b.price;
+                            }else if (sortType === "price-high"){
+                                return b.price - a.price;
+                            }else{
+                                return b.id - a.id;
+                            }
+                        })
+                        .map(product => (
+                            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+                                <div className="h-48 w-full bg-gray-200">
+                                    {product.imageUrl ? (
+                                        <img
+                                            src={`http://localhost:8080${product.imageUrl}`}
+                                            alt={product.title}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
+                                    )}
+                                </div>
 
-                            <div className="p-5">
-                                <h3 className="text-lg font-bold text-gray-800">{product.title}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                     <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
-                                         Seller: {product.user ? product.user.username : 'Anonymous'}
-                                     </span>
-                                </div>
-                                <p className="text-blue-600 font-bold text-xl my-2">${product.price}</p>
-                                <p className="text-gray-500 text-sm">{product.description}</p>
-                                <div className="mt-4 space-y-2">
-                                    <button className="w-full mt-4 border border-gray-300 py-2 rounded-lg hover:bg-gray-50">
-                                        Contact Seller
-                                    </button>
-                                    {/*Delete button only shows when
-                                    1. currentUser != null
-                                    2. product.user != null
-                                    3. currentUser.id === product.user.id*/}
-                                    {currentUser && product.user && (product.user.id === currentUser.id) ? (
-                                        <button
-                                            onClick={() => handleDelete(product.id)}
-                                            className="w-full mt-2 text-red-500 border border-red-500 py-1 rounded-lg hover:bg-red-50 transition"
-                                        >
-                                            Delete Item
+                                <div className="p-5">
+                                    <h3 className="text-lg font-bold text-gray-800">{product.title}</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                         <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                                             Seller: {product.user ? product.user.username : 'Anonymous'}
+                                         </span>
+                                    </div>
+                                    <p className="text-blue-600 font-bold text-xl my-2">${product.price}</p>
+                                    <p className="text-gray-500 text-sm">{product.description}</p>
+                                    <div className="mt-4 space-y-2">
+                                        <button className="w-full mt-4 border border-gray-300 py-2 rounded-lg hover:bg-gray-50">
+                                            Contact Seller
                                         </button>
-                                    ) : null}
+                                        {/*Delete button only shows when
+                                        1. currentUser != null
+                                        2. product.user != null
+                                        3. currentUser.id === product.user.id*/}
+                                        {currentUser && product.user && (product.user.id === currentUser.id) ? (
+                                            <button
+                                                onClick={() => handleDelete(product.id)}
+                                                className="w-full mt-2 text-red-500 border border-red-500 py-1 rounded-lg hover:bg-red-50 transition"
+                                            >
+                                                Delete Item
+                                            </button>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    }
                 </div>
             </main>
 
