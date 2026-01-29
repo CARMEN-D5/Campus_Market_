@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function App() {
     const [products, setProducts] = useState([]);
@@ -12,7 +12,7 @@ function App() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isLoginView, setIsLoginView] = useState(true);
     const [authData, setAuthData] = useState({username:'', password:''});
-
+    const [imageError, setImageError] = useState(null);
     // Fetch product list
     const fetchProducts = () => {
         fetch('http://localhost:8080/api/products')
@@ -26,13 +26,31 @@ function App() {
     // Handle image
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if(file) {
-            if(previewUrl){
-                URL.revokeObjectURL(previewUrl);
-            }
-            setImageFile(file);
-            setPreviewUrl(URL.createObjectURL(file))
+        if(!file) return;
+        setImageError(null);
+        if(file.size > MAX_FILE_SIZE){
+            const msg = "File is too large! Maximum limit is 5MB!"
+            setImageError(msg);
+            setImageFile(null);
+            setPreviewUrl(null);
+            e.target.value = "";
+            alert(msg);
+            return;
         }
+        if(!file.type.startsWith("image/")){
+            const msg = "Invalid file type! Please select an image!"
+            setImageError(msg);
+            setImageFile(null);
+            setPreviewUrl(null);
+            e.target.value = "";
+            alert(msg);
+            return;
+        }
+        if(previewUrl){
+            URL.revokeObjectURL(previewUrl);
+        }
+        setImageFile(file);
+        setPreviewUrl(URL.createObjectURL(file))
     };
 
     // Submit form
@@ -47,6 +65,10 @@ function App() {
         }
         if(currentUser){
             formData.append("userId", currentUser.id)
+        }
+        if(!imageFile || imageError){
+            alert("Please correct the errors before submitting.");
+            return;
         }
 
         fetch('http://localhost:8080/api/products/with-image',{
@@ -195,12 +217,15 @@ function App() {
                                             Image
                                         </label>
                                         <input
-                                            type="file" accept="image/*" required
+                                            type="file" accept="image/*"
                                             onChange={handleImageChange}
-                                            className="w-full p-2 border rounded-lg text-sm text-gray-500 file:mr-4 file:py-2
-                                        file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold
-                                        file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            className={`input-field ${imageError? 'border-red-500' : ''}`}
                                         />
+                                        {imageError && (
+                                            <p className= "text-red-500 text-xs font-bold animate-pulse">
+                                                ⚠️ {imageError}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 <div>
@@ -232,8 +257,12 @@ function App() {
                                     </div>
                                 )}
 
-                                <button type="submit"
-                                        className="btn-primary mt-2">
+                                <button
+                                    type="submit"
+                                    disabled={!imageFile || imageError}
+                                    className={`btn-primary mt-2 ${(!imageFile|| imageError) ? 
+                                        "bg-gray-300 cursor-not-allowed text-gray-500 shadow-none" : ""}`}
+                                >
                                     List It Now
                                 </button>
                             </form>
