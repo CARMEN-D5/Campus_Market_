@@ -18,10 +18,11 @@ public class Product {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
     public Product() {
     }
-
-
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -49,5 +50,13 @@ public class Product {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

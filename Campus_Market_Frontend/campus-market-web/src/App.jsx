@@ -109,10 +109,15 @@ function App() {
     // Delete Product
     const handleDelete = (id) => {
         if (window.confirm("Are you sure you want to delete this item?")){
-            fetch(`http://localhost:8080/api/products/${id}`, {
+            fetch(`http://localhost:8080/api/products/${id}?userId=${currentUser.id}`, {
                 method: 'DELETE',
             })
-            .then(() => {
+            .then(async(res) => {
+                const message = await res.text();
+                if(!res.ok){
+                    throw new Error(message);
+                }
+                alert(message);
                 fetchProducts();
             })
             .catch(err => console.error(err));

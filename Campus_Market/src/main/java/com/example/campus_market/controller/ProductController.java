@@ -1,5 +1,6 @@
 package com.example.campus_market.controller;
 
+import com.example.campus_market.entity.Category;
 import com.example.campus_market.entity.Product;
 import com.example.campus_market.entity.User;
 import com.example.campus_market.repository.UserRepository;
@@ -34,6 +35,7 @@ public class ProductController {
             @RequestParam("title") String title,
             @RequestParam("price") Double price,
             @RequestParam("description") String description,
+            @RequestParam("category") Category category,
             @RequestParam("image") MultipartFile image,
             @RequestParam("userId") Long userId) throws IOException {
 
@@ -55,6 +57,7 @@ public class ProductController {
         product.setTitle(title);
         product.setPrice(price);
         product.setDescription(description);
+        product.setCategory(category);
         product.setImageUrl("/uploads/" + fileName);
         product.setUser(user);
         return productService.saveProduct(product);
@@ -71,7 +74,19 @@ public class ProductController {
         if(product.getUser() == null || !product.getUser().getId().equals(userId)){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to delete this item");
         }
+        String imageUrl = product.getImageUrl();
+        if(imageUrl != null && !imageUrl.isEmpty()){
+            String absolutePath = "D:/Project/Campus_Market_/Campus_Market" + imageUrl;
+            File fileToDelete = new File(absolutePath);
+            if(fileToDelete.exists()){
+                if(fileToDelete.delete()){
+                    System.out.println("File deleted successfully: " + absolutePath);
+                }else{
+                    System.err.println("Failed to delete file: " + absolutePath);
+                }
+            }
+        }
         productService.deleteProduct(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("Item and associated image deleted successfully.");
     }
 }
