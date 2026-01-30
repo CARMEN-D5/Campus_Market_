@@ -29,6 +29,7 @@ function App() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortType, setSortType] = useState("latest")
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [viewMode, setViewMode] = useState("ALL");
 
     // Fetch product list
     const fetchProducts = () => {
@@ -155,6 +156,7 @@ function App() {
         setPreviewUrl(null);
         setNewProduct({ title: '', price: '', description: '' });
         setShowForm(false);
+        setViewMode("ALL");
     };
 
     return (
@@ -364,6 +366,29 @@ function App() {
                     }
                 </div>
 
+                {currentUser && (
+                    <div className="flex bg-gray-200 p-1 rounded-xl w-fit mb-6 shadow-inner">
+                        <button
+                            onClick={() => setViewMode("ALL")}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                                viewMode === "ALL" ? "bg-white text-blue-600 shadow-wd"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            All Market
+                        </button>
+                        <button
+                            onClick={() => setViewMode("MINE")}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                                viewMode === "MINE" ? "bg-white text-blue-600 shadow-wd"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            My Listings
+                        </button>
+                    </div>
+
+                )}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     {/* Search Bar */}
                     <div className="flex-1">
@@ -395,6 +420,13 @@ function App() {
                 {/* Product Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...products]
+                        // filter MINE / All Market
+                        .filter(product => {
+                            if(viewMode === "MINE"){
+                                return product.user && product.user.id === currentUser?.id;
+                            }
+                            return true;
+                        })
                         // filter selected categories
                         .filter(product =>{
                             if(selectedCategories.length === 0) return true;
