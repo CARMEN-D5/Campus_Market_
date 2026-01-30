@@ -30,6 +30,7 @@ function App() {
     const [sortType, setSortType] = useState("latest")
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [viewMode, setViewMode] = useState("ALL");
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     // Fetch product list
     const fetchProducts = () => {
@@ -118,6 +119,7 @@ function App() {
                 if(!res.ok){
                     throw new Error(message);
                 }
+                setSelectedProduct(null);
                 alert(message);
                 fetchProducts();
             })
@@ -158,6 +160,32 @@ function App() {
         setShowForm(false);
         setViewMode("ALL");
     };
+    const filteredProducts = [...products]      //get product list
+        // filter MINE / All Market
+        .filter(product => {
+            if(viewMode === "MINE"){
+                return product.user && product.user.id === currentUser?.id;
+            }
+            return true;
+        })
+        // filter selected categories
+        .filter(product =>{
+            if(selectedCategories.length === 0) return true;
+            return selectedCategories.includes(product.category);})
+        // filter searched terms
+        .filter(product =>(
+            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
+        .sort((a,b) => {
+            if (sortType === "price-low") {
+                return a.price - b.price;
+            } else if (sortType === "price-high") {
+                return b.price - a.price;
+            } else {
+                return b.id - a.id;
+            }
+        })
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -418,83 +446,83 @@ function App() {
                 <h2 className="text-xl font-semibold text-gray-700 mb-6">Latest Listings</h2>
 
                 {/* Product Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...products]
-                        // filter MINE / All Market
-                        .filter(product => {
-                            if(viewMode === "MINE"){
-                                return product.user && product.user.id === currentUser?.id;
-                            }
-                            return true;
-                        })
-                        // filter selected categories
-                        .filter(product =>{
-                            if(selectedCategories.length === 0) return true;
-                            return selectedCategories.includes(product.category);})
-                        // filter searched terms
-                        .filter(product =>(
-                            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            product.description.toLowerCase().includes(searchTerm.toLowerCase())
-                        ))
-                        .sort((a,b) => {
-                            if(sortType === "price-low"){
-                                return a.price - b.price;
-                            }else if (sortType === "price-high"){
-                                return b.price - a.price;
-                            }else{
-                                return b.id - a.id;
-                            }
-                        })
-                        .map(product => (
-                            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
-                                <div className="h-48 w-full bg-gray-200">
-                                    {product.imageUrl ? (
-                                        <img
-                                            src={`http://localhost:8080${product.imageUrl}`}
-                                            alt={product.title}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
-                                    )}
-                                </div>
+                <div className={"mt-8"}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredProducts.length > 0
+                            ? (filteredProducts).map(product => (
+                                <div key={product.id}
+                                     onClick={() => setSelectedProduct(product)}
+                                     className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+                                    <div className="h-48 w-full bg-gray-200">
+                                        {product.imageUrl ? (
+                                            <img
+                                                src={`http://localhost:8080${product.imageUrl}`}
+                                                alt={product.title}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
+                                        )}
+                                    </div>
 
-                                <div className="p-5">
-                                    <h3 className="text-lg font-bold text-gray-800">{product.title}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                         <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                                    <div className="p-5">
+                                        <h3 className="text-lg font-bold text-gray-800">{product.title}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
                                              Seller: {product.user ? product.user.username : 'Anonymous'}
-                                         </span>
-                                    </div>
-                                    <p className="text-blue-600 font-bold text-xl my-2">${product.price}</p>
-                                    <p className="text-gray-500 text-sm">{product.description}</p>
-                                    <div className="mt-4 space-y-2">
-                                        <button className="w-full mt-4 border border-gray-300 py-2 rounded-lg hover:bg-gray-50">
-                                            Contact Seller
-                                        </button>
-                                        {/*Delete button only shows when
-                                        1. currentUser != null
-                                        2. product.user != null
-                                        3. currentUser.id === product.user.id*/}
-                                        {currentUser && product.user && (product.user.id === currentUser.id) ? (
-                                            <button
-                                                onClick={() => handleDelete(product.id)}
-                                                className="w-full mt-2 text-red-500 border border-red-500 py-1 rounded-lg hover:bg-red-50 transition"
-                                            >
-                                                Delete Item
+                                            </span>
+                                        </div>
+                                        <p className="text-blue-600 font-bold text-xl my-2">${product.price}</p>
+                                        <p className="text-gray-500 text-sm">{product.description}</p>
+                                        <div className="mt-4 space-y-2">
+                                            <button className="w-full mt-4 border border-gray-300 py-2 rounded-lg hover:bg-gray-50">
+                                                Contact Seller
                                             </button>
-                                        ) : null}
+                                            {/*Delete button only shows when
+                                            1. currentUser != null
+                                            2. product.user != null
+                                            3. currentUser.id === product.user.id*/}
+                                            {currentUser && product.user && (product.user.id === currentUser.id) ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(product.id);
+                                                    }}
+                                                    className="w-full mt-2 text-red-500 border border-red-500 py-1 rounded-lg hover:bg-red-50 transition"
+                                                >
+                                                    Delete Item
+                                                </button>
+                                            ) : null}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
-                    }
+                            )) : (
+                                <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                    <div className="text-64px mb-4">🔍</div>
+                                    <h3 className="text-xl font-bold text-gray-800">No Items Found </h3>
+                                    <p className="text-gray-500 mt-2 text-center max-w-xs">
+                                        Try adjusting your search keywords or filters to find more.
+                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            setSelectedCategories([]);
+                                            setViewMode("ALL");
+                                        }}
+                                        className="mt-6 px-6 py-2 bg-white border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition shadow-sm"
+                                    >
+                                        Clear all filters
+                                    </button>
+                                </div>
+                            )
+                        }
+                    </div>
                 </div>
             </main>
 
             {/* Auth Modal */}
             {showAuthModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="modal2-bg">
                     <div
                         className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
                         onClick={() => setShowAuthModal(false)}
@@ -548,6 +576,86 @@ function App() {
 
                     </div>
 
+                </div>
+            )}
+
+            {/* Product Detail Modal */}
+            {selectedProduct && (
+                <div className="modal2-bg">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                         onClick={() => setSelectedProduct(null)}
+                     ></div>
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setSelectedProduct(null)}
+                            className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-md rounded-full hover:bg-white transition shadow-lg">
+                            <span className="text-xl">×</span>
+                        </button>
+                        <div className="flex flex-col md:flex-row">
+                            <div className="md:w-1/2 h-64 md:h-auto bg-gray-100">
+                                {selectedProduct.imageUrl ? (
+                                    <img
+                                        src={`http://localhost:8080${selectedProduct.imageUrl}`}
+                                        alt={selectedProduct.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) :(
+                                    <div
+                                        className="w-full h-full flex items-center justify-center text-gray-400 text-sm"
+                                    >
+                                        No Image
+                                    </div>
+                                )}
+                            </div>
+                            <div className={"md:w-1/2 p-8 space-y-4"}>
+                                <div>
+                                <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full uppercase">
+                                    {selectedProduct.category}
+                                </span>
+                                    <h2 className="text-3xl font-bold text-gray-800 mt-2">
+                                        {selectedProduct.title}
+                                    </h2>
+                                    <p className="text-2xl font-black text-blue-600 mt-1">
+                                        ${selectedProduct.price}
+                                    </p>
+                                </div>
+
+                                <div className="border-t border-gray-100 pt-4">
+                                    <p className="text-sm font-semibold text-gray-500 uppercase">
+                                        Description
+                                    </p>
+                                    <p className="text-gray-600 leading-relaxed mt-1">
+                                        {selectedProduct.description}
+                                    </p>
+                                </div>
+                                <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
+                                    <div className="text-sm">
+                                        <p className="text-gray-400"> Listed by</p>
+                                        <p className="font-bold text-gray-700">
+                                            {selectedProduct.user?.username || 'Anonymous'}
+                                        </p>
+                                    </div>
+                                    {currentUser && selectedProduct.user?.id === currentUser.id
+                                        ? (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(selectedProduct.id);
+                                                    setSelectedProduct(null);
+                                                }}
+                                                className="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold hover:bg-red-500 hover:text-white transition"
+                                            >
+                                                Delete Item
+                                            </button>
+                                        ) : (
+                                            <button className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                                                Contact Seller
+                                            </button>
+                                        )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -17,6 +17,10 @@
     .btn-primary {
         @apply w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all active:scale-95;
     }
+
+    .modal2-bg {
+        @apply fixed inset-0 z-50 flex items-center justify-center p-4
+    }
 }
 
 @keyframes modal-appear {
