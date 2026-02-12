@@ -8,60 +8,28 @@ import ProductGrid from "./components/ProductGrid.jsx";
 import AuthModal from "./components/modals/AuthModal.jsx";
 import SortSelect from "./components/SortSelect.jsx";
 import {useProducts} from "./hooks/useProducts.js";
+import {useMarketPage} from "./hooks/useMarketPage.js";
 import {useAuth} from "./context/AuthContext.jsx"
-
-
-const CATEGORIES = [
-    {label: "All", value: "ALL"},
-    {label: "Electronics", value: "ELECTRONICS"},
-    {label: "Books", value: "BOOKS"},
-    {label: "Appliances", value: "APPLIANCES"},
-    {label: "Stationery", value: "STATIONERY"},
-    {label: "Clothing", value: "CLOTHING"},
-    {label: "Foods", value: "FOODS"},
-    {label: "Accessories", value: "ACCESSORIES"},
-    {label: "Household", value: "HOUSEHOLD"},
-    {label: "Sports", value: "SPORTS"},
-    {label: "Others", value: "OTHERS"}
-];
+import {CATEGORIES} from "./constants/categories.js";
+import {usePostProduct} from "./hooks/usePostProduct.js";
 
 function App() {
-    const {fetchProducts, filteredProducts, deleteProduct} = useProducts();
-    const [showForm, setShowForm] = useState(false);
-    const [newProduct, setNewProduct] = useState({title: '', price: '', description: '', category: ''});
-    const [imageFile, setImageFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+    const {showForm, setShowForm, newProduct, setNewProduct, imageFile, setImageFile, previewUrl, setPreviewUrl} = usePostProduct();
     const {currentUser, login, register, logout} = useAuth();
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isLoginView, setIsLoginView] = useState(true);
-
-    const [searchTerm, setSearchTerm] = useState("");
-    const [sortType, setSortType] = useState("latest")
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [viewMode, setViewMode] = useState("ALL");
+    const {searchTerm, setSearchTerm, sortType, setSortType, selectedCategories, setSelectedCategories, viewMode,
+        setViewMode, resetFilters} = useMarketPage();
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const displayedProducts = filteredProducts(viewMode, currentUser, selectedCategories, searchTerm, sortType);
+    const {displayedProducts,fetchProducts, deleteProduct} = useProducts(
+        {viewMode,currentUser,
+            selectedCategories,searchTerm,sortType});
 
     // Delete Product
     const handleDelete = (id) => {
         if (!window.confirm("Are you sure you want to delete this item?")) return ;
         deleteProduct(id, currentUser.id);
         setSelectedProduct(null);
-        // {
-        //     fetch(`http://localhost:8080/api/products/${id}?userId=${currentUser.id}`, {
-        //         method: 'DELETE',
-        //     })
-        //     .then(async(res) => {
-        //         const message = await res.text();
-        //         if(!res.ok){
-        //             throw new Error(message);
-        //         }
-        //         setSelectedProduct(null);
-        //         alert(message);
-        //         fetchProducts();
-        //     })
-        //     .catch(err => console.error(err));
-        // }
     };
 
     // Clear-up events after logging out
@@ -155,21 +123,11 @@ function App() {
 
                 {/* Product Grid */}
                 <ProductGrid
-                    // filteredProducts = {filteredProducts}
                     displayedProducts = {displayedProducts}
-                    // products={products}
-                    // viewMode={viewMode}
-                    // selectedCategories={selectedCategories}
-                    // searchTerm={searchTerm}
-                    // sortType={sortType}
                     setSelectedProduct = {setSelectedProduct}
                     currentUser = {currentUser}
                     onDelete = {handleDelete}
-                    onClear = {() => {
-                        setSearchTerm('');
-                        setSelectedCategories([]);
-                        setViewMode("ALL");
-                    }}
+                    onClear = {resetFilters}
                 />
             </main>
 

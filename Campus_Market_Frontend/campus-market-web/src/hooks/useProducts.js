@@ -1,15 +1,21 @@
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {productApi} from "../api/productApi.js";
 
-export function useProducts(){
+export function useProducts({
+    viewMode,
+    currentUser,
+    selectedCategories,
+    searchTerm,
+    sortType
+}) {
     const [products, setProducts] = useState([]);
 
-    const fetchProducts =async () => {
+    const fetchProducts = async () => {
         const data = await productApi.getAll();
         setProducts(data);
     }
 
-    useEffect(()=> {
+    useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchProducts();
     }, []);
@@ -19,9 +25,8 @@ export function useProducts(){
         fetchProducts();
     };
 
-    const filteredProducts = (viewMode, currentUser, selectedCategories, searchTerm, sortType) => {
-        return [...products] //get product list
-            // filter MINE / All Market
+    const displayedProducts = useMemo(() => {
+        return products
             .filter(p =>
                 viewMode === "MINE" ?
                     p.user?.id === currentUser?.id : true
@@ -44,8 +49,9 @@ export function useProducts(){
                 } else {
                     return b.id - a.id;
                 }
-            })
-    }
+            });
+    }, [products, viewMode, currentUser, selectedCategories, searchTerm, sortType])
 
-    return{fetchProducts, filteredProducts, deleteProduct};
+    return{displayedProducts,fetchProducts,deleteProduct};
 }
+
