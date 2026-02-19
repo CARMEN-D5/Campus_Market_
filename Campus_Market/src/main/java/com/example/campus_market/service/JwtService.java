@@ -15,19 +15,26 @@ import java.util.Date;
 public class JwtService {
 
     private static final String SECRET = "campus-market-secret-key-123456-campus-market-secret";
-    private static final long EXPIRATION = 1000 * 60 * 60 *23;
+    private static final long EXPIRATION = 1000 * 60 * 60 *24;
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
     public String generateToken(User user){
         return Jwts.builder()
-                .claims(Map.of(
-                        "sub", user.getUsername(),
-                        "id", user.getId(),
-                        "iat", new Date(),
-                        "exp", new Date(System.currentTimeMillis() + EXPIRATION)
-                ))
+                .subject(user.getUsername())
+                .claim("id", user.getId())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis()+EXPIRATION))
                 .signWith(key)
                 .compact();
+
+//                .claims(Map.of(
+//                        "sub", user.getUsername(),
+//                        "id", user.getId(),
+//                        "iat", new Date(),
+//                        "exp", new Date(System.currentTimeMillis() + EXPIRATION)
+//                ))
+//                .signWith(key)
+//                .compact();
     }
 
     public Claims parseToken(String token) {

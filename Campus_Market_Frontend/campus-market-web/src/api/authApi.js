@@ -2,7 +2,7 @@ import {request} from "./http.js";
 
 export const authApi = {
     login: (data) =>
-        request("/api/users/login", {
+        request("/api/auth/login", {
             method: "POST",
             body: JSON.stringify(data),
         }),
@@ -14,5 +14,5 @@ export const authApi = {
         }),
 
     getMe: () =>
-        request("/api/users/me"),
+        request("/api/auth/me"),
 };
